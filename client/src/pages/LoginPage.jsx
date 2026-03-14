@@ -72,7 +72,7 @@ export default function LoginPage() {
       {/* Left: Form Card */}
       <div className="login-left">
         <div className="login-card">
-          <h1>✈️ Voyanta</h1>
+          <img src="/voyanta-logo.png" alt="Voyanta" style={{ height: "48px", marginBottom: "0.25rem" }} />
           <p className="subtitle">AI-powered collaborative travel planner</p>
 
           <button className="btn btn-google" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem", padding: "0.75rem" }} onClick={signInWithGoogle}>
@@ -129,7 +129,7 @@ export default function LoginPage() {
       {/* Right: Animated text panel */}
       <div className="login-right">
         <div className="login-anim-panel">
-          <div className="login-anim-badge">✈️ Voyanta</div>
+          <div className="login-anim-badge"><img src="/voyanta-logo.png" alt="Voyanta" style={{ height: "28px", filter: "brightness(0) invert(1)" }} /></div>
           <h2 className="login-anim-headline">
             Your Next Adventure <span className="login-anim-gradient">Starts Here.</span>
           </h2>
