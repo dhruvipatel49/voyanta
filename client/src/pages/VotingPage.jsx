@@ -51,7 +51,19 @@ export default function VotingPage() {
 
   async function castVote(placeId, voteValue) {
     const currentVote = userVotes[placeId];
-    if (currentVote === voteValue) {
+
+    if (voteValue === -1) {
+      // Downvote = remove your vote entirely (no negative votes allowed)
+      if (currentVote) {
+        await supabase
+          .from("votes")
+          .delete()
+          .eq("trip_id", tripId)
+          .eq("place_id", placeId)
+          .eq("user_id", user.id);
+      }
+    } else if (currentVote === voteValue) {
+      // Clicking upvote again = toggle off (remove vote)
       await supabase
         .from("votes")
         .delete()
@@ -59,8 +71,9 @@ export default function VotingPage() {
         .eq("place_id", placeId)
         .eq("user_id", user.id);
     } else {
+      // Upvote: insert/update with vote = 1
       await supabase.from("votes").upsert(
-        { trip_id: tripId, place_id: placeId, user_id: user.id, vote: voteValue },
+        { trip_id: tripId, place_id: placeId, user_id: user.id, vote: 1 },
         { onConflict: "trip_id,place_id,user_id" }
       );
     }
@@ -69,7 +82,7 @@ export default function VotingPage() {
 
   function getVoteCount(placeId) {
     const result = voteResults.find((r) => r.place_id === placeId);
-    return result?.total_votes || 0;
+    return Math.max(result?.total_votes || 0, 0);
   }
 
   function getVoters(placeId) {
