@@ -37,3 +37,11 @@ export const fetchHotels = (city, budget) =>
 
 export const getHotelRecommendations = (tripId, message) =>
   api.post("/hotels/recommend", { trip_id: tripId, message }).then((r) => r.data);
+
+/* ── Trips ──────────────────────────────────── */
+export const updateTrip = (tripId, payload) =>
+  api.put(`/trips/${tripId}`, payload).then((r) => r.data);
+
+export const deleteTrip = (tripId) =>
+  api.delete(`/trips/${tripId}`).then((r) => r.data);
+

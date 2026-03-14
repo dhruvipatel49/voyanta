@@ -10,6 +10,7 @@ const expensesRoutes = require("./routes/expenses");
 const membersRoutes = require("./routes/members");
 const wishlistUsersRoutes = require("./routes/wishlistUsers");
 const hotelsRoutes = require("./routes/hotels");
+const tripsRoutes = require("./routes/trips");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -29,6 +30,7 @@ app.use("/api/expenses", expensesRoutes);
 app.use("/api/members", membersRoutes);
 app.use("/api/wishlist", wishlistUsersRoutes);
 app.use("/api/hotels", hotelsRoutes);
+app.use("/api/trips", tripsRoutes);
 
 // ── Health check ─────────────────────────────────────
 app.get("/api/health", (_req, res) => {

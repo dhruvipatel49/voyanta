@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
-import { fetchMembers, fetchHotels, getHotelRecommendations } from "../services/api";
+import { fetchMembers, fetchHotels, getHotelRecommendations, updateTrip, deleteTrip } from "../services/api";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 const DESTINATIONS = ["Udaipur", "Jaipur", "Goa", "Manali", "Kerala"];
@@ -83,30 +83,28 @@ export default function TripDashboardPage() {
 
   async function handleEditTrip(e) {
     e.preventDefault();
-    const { error } = await supabase
-      .from("trips")
-      .update({
+    try {
+      await updateTrip(tripId, {
         title: editTitle,
         destination_city: editCity,
         days: Number(editDays),
         budget: editBudget ? Number(editBudget) : null,
-      })
-      .eq("id", tripId);
-    if (error) { alert(error.message); return; }
-    setShowEdit(false);
-    loadTripData();
+      });
+      setShowEdit(false);
+      loadTripData();
+    } catch (err) {
+      alert("Failed to update trip: " + (err.response?.data?.detail || err.message));
+    }
   }
 
   async function handleDeleteTrip() {
     if (!window.confirm("Are you sure you want to delete this trip? This cannot be undone.")) return;
-    // Delete related data first
-    await supabase.from("itinerary").delete().eq("trip_id", tripId);
-    await supabase.from("expenses").delete().eq("trip_id", tripId);
-    await supabase.from("votes").delete().eq("trip_id", tripId);
-    await supabase.from("wishlist").delete().eq("trip_id", tripId);
-    await supabase.from("trip_members").delete().eq("trip_id", tripId);
-    await supabase.from("trips").delete().eq("id", tripId);
-    navigate("/");
+    try {
+      await deleteTrip(tripId);
+      navigate("/");
+    } catch (err) {
+      alert("Failed to delete trip: " + (err.response?.data?.detail || err.message));
+    }
   }
 
   if (!trip) return <LoadingSpinner message="Loading trip..." />;
