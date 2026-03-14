@@ -175,6 +175,16 @@ async function recommendHotels({ city, hotels, userMessage, budget, days }) {
     `Amenities: ${(h.amenities || []).join(", ")} | ` +
     `Description: ${h.description || "N/A"}`;
 
+  const perNight = budget && days ? Math.round(budget / days) : null;
+
+  const budgetBlock = perNight
+    ? `## Budget Info
+- Total trip budget: ₹${budget} for ${days} days
+- Per-night budget: ≈ ₹${perNight}/night
+- You MUST prioritize hotels with price_per_night ≤ ₹${perNight}. If no exact match exists, pick the closest ones BELOW the budget first.
+- NEVER recommend luxury hotels if the budget is for budget/mid-range, and vice versa.`
+    : "";
+
   const prompt = `You are an expert hotel concierge for ${city}, India. A traveler needs hotel recommendations.
 
 ## Available Hotels in ${city}
@@ -183,15 +193,18 @@ ${hotels.map(formatHotel).join("\n")}
 ## Traveler's Request
 "${userMessage}"
 
-${budget ? `## Budget Info: ₹${budget} total for ${days || "a few"} days (≈ ₹${Math.round(budget / (days || 3))}/night)` : ""}
+${budgetBlock}
 
 ## Rules
-- Recommend the BEST matching hotels from the list above based on the traveler's request.
-- Consider: budget constraints, preferred area, amenities, rating, and value for money.
-- If traveler mentions a budget, calculate per-night budget and filter accordingly.
+- BUDGET IS THE #1 PRIORITY. Filter by budget first, THEN rank by rating and amenities.
+- If the traveler mentions any budget amount in their message, use THAT number as per-night budget.
+- For budget travelers (≤₹2000/night): ONLY recommend budget hotels.
+- For mid-range travelers (₹2000-₹6000/night): recommend budget and mid-range hotels.
+- For luxury travelers (>₹6000/night): recommend mid-range and luxury hotels.
+- Consider: area preference, amenities, rating, and value for money — but ONLY after budget filtering.
 - Return 3-5 hotels ranked by best match.
 - Use ONLY hotels from the provided list. Do NOT invent hotels.
-- Give a personalized reason for each pick.
+- Give a personalized reason for each pick that mentions the price.
 
 ## Output — ONLY valid JSON, no markdown fences
 {
@@ -204,10 +217,10 @@ ${budget ? `## Budget Info: ₹${budget} total for ${days || "a few"} days (≈ 
       "price_per_night": 5000,
       "price_category": "mid-range",
       "amenities": ["wifi", "pool"],
-      "reason": "Personalized reason why this hotel matches the traveler's request"
+      "reason": "Personalized reason why this hotel matches the traveler's budget and request"
     }
   ],
-  "summary": "A brief friendly summary of your recommendations, addressing the traveler's specific needs"
+  "summary": "A brief friendly summary of your recommendations, addressing the traveler's specific budget and needs"
 }`;
 
   const response = await openai.chat.completions.create({
@@ -223,3 +236,4 @@ ${budget ? `## Budget Info: ₹${budget} total for ${days || "a few"} days (≈ 
 }
 
 module.exports = { generateItinerary, editItinerary, recommendHotels };
+
