@@ -36,6 +36,6 @@ app.get("/api/health", (_req, res) => {
 });
 
 // ── Start ────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✈️  Voyanta API running on http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`✈️  Voyanta API running on port ${PORT}`);
 });
