@@ -1,7 +1,40 @@
 const OpenAI = require("openai");
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY });
-const MODEL = "gpt-4o";
+// Validate API key on startup
+if (!process.env.OPENAI_KEY) {
+  console.error("❌ OPENAI_KEY is not set! AI features will not work.");
+  console.error("   Set it in Railway env vars or in your .env file.");
+}
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_KEY || "missing-key" });
+const MODEL = "gpt-4o-mini";
+
+/**
+ * Safely parse JSON from OpenAI response — handles markdown fences,
+ * trailing commas, and logs raw text on failure for debugging.
+ */
+function safeParseJSON(text, context = "") {
+  // Strip markdown code fences
+  let cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (firstErr) {
+    console.error(`⚠️ JSON parse failed (${context}). Raw text:\n`, cleaned.substring(0, 500));
+
+    // Try to extract JSON object from the text
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        return JSON.parse(jsonMatch[0]);
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    throw new Error(`AI returned invalid JSON (${context}): ${firstErr.message}`);
+  }
+}
 
 // ── Generate Itinerary ───────────────────────────────
 async function generateItinerary({ city, days, places, preferences, hotelLocation, hotels, budget }) {
@@ -94,13 +127,11 @@ ${hotels && hotels.length > 0 ? `- Recommend TOP 3 best hotels from the hotel li
     messages: [{ role: "user", content: prompt }],
     temperature: 0.7,
     max_completion_tokens: 3000,
+    response_format: { type: "json_object" },
   });
 
   const text = response.choices[0].message.content.trim();
-
-  // Strip markdown code fences if AI adds them
-  const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-  return JSON.parse(cleaned);
+  return safeParseJSON(text, "generateItinerary");
 }
 
 // ── Edit Itinerary ───────────────────────────────────
@@ -153,11 +184,11 @@ ${gemsBlock}
     messages: [{ role: "user", content: prompt }],
     temperature: 0.7,
     max_completion_tokens: 2000,
+    response_format: { type: "json_object" },
   });
 
   const text = response.choices[0].message.content.trim();
-  const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-  const parsed = JSON.parse(cleaned);
+  const parsed = safeParseJSON(text, "editItinerary");
 
   // Normalize: if AI returned bare itinerary without wrapper, wrap it
   if (parsed.itinerary) {
@@ -228,11 +259,11 @@ ${budgetBlock}
     messages: [{ role: "user", content: prompt }],
     temperature: 0.7,
     max_completion_tokens: 1500,
+    response_format: { type: "json_object" },
   });
 
   const text = response.choices[0].message.content.trim();
-  const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "");
-  return JSON.parse(cleaned);
+  return safeParseJSON(text, "recommendHotels");
 }
 
 module.exports = { generateItinerary, editItinerary, recommendHotels };

@@ -1,5 +1,13 @@
-require("dotenv").config({ path: "../.env" });
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, "../.env") });
 require("dotenv").config(); // also check local .env in server/
+
+// Log env status for debugging
+console.log("🔑 ENV check:", {
+  SUPABASE_URL: process.env.SUPABASE_URL ? "✅ set" : "❌ missing",
+  OPENAI_KEY: process.env.OPENAI_KEY ? "✅ set" : "❌ missing",
+  PORT: process.env.PORT || "3001 (default)",
+});
 const express = require("express");
 const cors = require("cors");
 
